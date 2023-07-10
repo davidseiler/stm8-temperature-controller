@@ -1,3 +1,6 @@
+#ifndef FAN_H
+#define FAN_H
+
 #include <stdint.h>
 
 /* Pin mappings
@@ -17,3 +20,5 @@ void PWM_start();
 
 /* Stop PWM output */
 void PWM_stop();
+
+#endif

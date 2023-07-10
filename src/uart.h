@@ -1,3 +1,6 @@
+#ifndef UART_H
+#define UART_H
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -29,3 +32,5 @@ uint8_t UART_read();
 
 /* Tells printf to print to the uart */
 int putchar(int c);
+
+#endif

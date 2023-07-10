@@ -17,7 +17,7 @@ static inline void write_one() {
     delay_us(56);
 }
 
-static inline uint8_t read_bit() {
+static uint8_t read_bit() {
     // Pull low for one clock to enable read slot
     PD_ODR &= ~(1 << ONE_WIRE_BUS);
     delay_us(6);
@@ -30,7 +30,7 @@ static inline uint8_t read_bit() {
     return res;    // 0x01 or 0x00
 }
 
-static inline void write_byte(uint8_t data) {
+static void write_byte(uint8_t data) {
     PD_DDR |= (1 << ONE_WIRE_BUS);
     for (int i = 0; i < 8; i++) {   // Bits written LSB first 
         if ((data & (1 << i)) >> i) {
@@ -49,7 +49,7 @@ static void read_bytes(void *buf, uint8_t num_bytes) {
     }
 }
 
-static inline void reset() {
+static void reset() {
     while (1) {
         // Send initilization pulse (pull down for min of 480us)
         PD_ODR &= ~(1 << ONE_WIRE_BUS);    // Pull down

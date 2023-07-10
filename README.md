@@ -1,7 +1,7 @@
 # STM8S Temperature Controller for 3D Printer Enclosure
 
 ## Description
-This repository contains the source code for a STM8S temperature controller created for maintaining a constant ambient temperature in an 3D printer enclosure. It developed for the sdcc compiler targeting STM8S.
+This repository contains the source code for a STM8S temperature controller for maintaining a constant ambient temperature in an 3D printer enclosure. It developed for the sdcc targeting STM8S.
 
 ## Part List
 

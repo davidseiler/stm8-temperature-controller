@@ -1,3 +1,6 @@
+#ifndef DS18B20_H
+#define DS18B20_H
+
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -41,3 +44,4 @@ int16_t ONE_WIRE_whole_temperature(uint8_t* temp_bytes);
 uint16_t ONE_WIRE_decimal_temperature(uint8_t* temp_bytes);
 
 
+#endif

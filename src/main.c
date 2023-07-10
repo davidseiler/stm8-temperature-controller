@@ -9,48 +9,64 @@
 
 // Use Port A and C: PA1 and PC1 for setting the target temperature
 #define PA_ISR              3   // EXTI0 interrupt irq for Port A external
-#define TARGET_DOWN_PIN     2
+#define PA_ENCODER_A        2
 #define PC_ISR              5   // EXTI2 interrupt irq for Port C external
-#define TARGET_UP_PIN       1
+#define PC_ENCODER_B        1
+#define PD_ISR              6   // interrupt irq for Port D external
+#define PD_ENCODER_C        2   // Pin for EC3 encoder push button
 
+
+// Temperature related values
 volatile uint8_t target_temp = 25;
+volatile uint8_t kp = 1;
+volatile uint8_t ki = 1;
+volatile uint8_t kd = 1;
 
-void target_up(void) __interrupt(PC_ISR) {
-    PRINTF("Interrupted up\n");
-    PC_CR2 &= ~(1 << TARGET_UP_PIN);     // Disable interrupts
-    if (target_temp < 150) {
-        target_temp += 5;
+// TODO: interrupts during LCD operations mess things up, to the point that reset is required,
+// I think what is happening is LCD_write_position doesn't return the memory section to the correct spot,
+// so it is possible after the interrupt is exited the next text is randomly sent somewhere else
+void encoder_triggered(void) __interrupt(PA_ISR) {
+    PA_CR2 &= ~(1 << PA_ENCODER_A);     // Disable interrupts
+    uint8_t b_val = (PC_IDR & (1 << PC_ENCODER_B)) >> PC_ENCODER_B;  // Read value of B line
+    
+    // When b=0 => counter clockwise when b=1 =>clockwise
+    if (b_val) {
+        if (target_temp < 255) {
+            target_temp += 5;
+        }
+    } else {
+        if (target_temp > 0) {
+            target_temp -= 5;
+        }
     }
 
-    // Update target temperature on display
     char temp[4];
     sprintf(temp,"%3d", target_temp);
     LCD_write_position(temp, (uint8_t)19, 3, 0);
 
-    // Wait for button to bounce back
-    while (!((PC_IDR & (1 << TARGET_UP_PIN)) >> TARGET_UP_PIN)); 
-    delay_ms(50);   // Ignore double bounces
+    // Wait for both lines to bounce up
+    while (!((PC_IDR & (1 << PC_ENCODER_B)) >> PC_ENCODER_B) || !((PA_IDR & (1 << PA_ENCODER_A)) >> PA_ENCODER_A)); 
 
-    PC_CR2 |= (1 << TARGET_UP_PIN);     // Enable interrupts
+    PA_CR2 |= (1 << PA_ENCODER_A);     // Enable interrupts
 }
 
-void target_down(void) __interrupt(PA_ISR) {
-    PRINTF("Interrupted down\n");
-    PA_CR2 &= ~(1 << TARGET_DOWN_PIN);     // Disable interrupts
-    if (target_temp >= 5) {
-        target_temp -= 5;
-    }
-
-    // Update target temp on display
-    char temp[4];
-    sprintf(temp,"%3d", target_temp);
-    LCD_write_position(temp, (uint8_t)19, 3, 0);
-
+void encoder_click(void) __interrupt(PD_ISR) {
+    PD_CR2 &= ~(1 << PD_ENCODER_C);     // Disable interrupts
+    
+    pid_menu();
     // Wait for button to bounce back
-    while (!((PA_IDR & (1 << TARGET_DOWN_PIN)) >> TARGET_DOWN_PIN));
+    while (!((PD_IDR & (1 << PD_ENCODER_C)) >> PD_ENCODER_C)); 
     delay_ms(50);   // Ignore double bounces
 
-    PA_CR2 |= (1 << TARGET_DOWN_PIN);   // Enable interrupts
+    PD_CR2 |= (1 << PD_ENCODER_C);     // Enable interrupts
+}
+
+static void pid_menu() {
+    uint8_t selected = 0;
+    LCD_clear();
+    char message[32];
+    sprintf(message, "This is the menuP:%2d, I:%2d, D:%2d", kp, ki, kp);
+    LCD_write_16_2(message, 0);
 }
 
 static void monitor_temp(uint8_t* rom_bytes, uint16_t frequency_ms) {
@@ -112,12 +128,14 @@ void main() {
 
     // Setup Port A and C: A1 C1 for adjusting target temperature
     __asm__("rim");         // Enable interrupts
-    PA_DDR &= ~(1 << TARGET_DOWN_PIN);     // Enable as input
-    PA_CR1 |= (1 << TARGET_DOWN_PIN);      // Enable as pull up
-    PA_CR2 |= (1 << TARGET_DOWN_PIN);      // Enable interrupts
-    PC_DDR &= ~(1 << TARGET_UP_PIN);       // Enable as input
-    PC_CR1 |= (1 << TARGET_UP_PIN);        // Enable as pull up
-    PC_CR2 |= (1 << TARGET_UP_PIN);        // Enable interrupts
+    PA_DDR &= ~(1 << PA_ENCODER_A);     // Enable as input
+    PA_CR1 |= (1 << PA_ENCODER_A);      // Enable as pull up
+    PA_CR2 |= (1 << PA_ENCODER_A);      // Enable interrupts
+    PC_DDR &= ~(1 << PC_ENCODER_B);     // Enable as input
+    PC_CR1 |= (1 << PC_ENCODER_B);      // Enable as pull up
+    PD_DDR &= ~(1 << PD_ENCODER_C);     // Enable as input
+    PD_CR1 |= (1 << PD_ENCODER_C);      // Enable as pull up
+    PD_CR2 |= (1 << PD_ENCODER_C);      // Enable interrupts
 
     // Fetch the ROM's of all the devices on the bus
     uint8_t* rom_bytes = calloc(NUM_SENSORS * 8, sizeof(uint8_t));

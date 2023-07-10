@@ -1,3 +1,7 @@
+#ifndef DELAY_H
+#define DELAY_H
+
+
 #include <stdint.h>
 
 #define F_CPU 2000000UL
@@ -14,3 +18,5 @@ inline void delay_us(uint16_t us) {
         __asm__("nop");
     }
 }
+
+#endif

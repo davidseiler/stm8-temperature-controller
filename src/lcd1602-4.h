@@ -1,20 +1,16 @@
-#ifndef LCD16028_H
-#define LCD16028_H
+#ifndef LCD16024_H
+#define LCD16024_H
 
 #include <stdint.h>
 
-/* HD44780 LCD1602 operating in 8-bit mode */
+/* HD44780 LCD1602 operating in 4-bit mode */
 
 /* Pin mappings
-LCD1602 -- STM8S   
+LCD1602 -- STM8S207K8   
 RS -> PC4
 RW -> PC6
 E  -> PC7
 
-D0 -> PB0
-D1 -> PB1
-D2 -> PB2
-D3 -> PB3
 D4 -> PB4
 D5 -> PB5
 D6 -> PF4 (A6)
