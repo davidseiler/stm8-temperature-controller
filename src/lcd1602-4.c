@@ -3,29 +3,24 @@
 #include "delay.h"
 
 static inline void set_data_bits(uint8_t data) {
-    PB_ODR &= 0b11001111;
-    PF_ODR &= 0b11101111;
-    PC_ODR &= 0b11011111;
-    PB_ODR |= ((data & 0b00000001) << 4); // PB4
-    PB_ODR |= ((data & 0b00000010) << 4); // PB5
-    PF_ODR |= (((data & 0b000000100)) << 2); // PF4
-    PC_ODR |= ((data & 0b00001000) << 2);   // PC5
+    PC_ODR &= 0b00001111;
+    PC_ODR |= ((data & 0b00001111) << 4);
 }
 
 void send_instruction(uint8_t flags, uint8_t data) {    // flags: 0b000000(RS)(RW)
-    PC_ODR &= ~(1 << RS_PIN);
-    PC_ODR &= ~(1 << RW_PIN);
+    PA_ODR &= ~(1 << RS_PIN);
+    PD_ODR &= ~(1 << RW_PIN);
     uint8_t first = data >> 4;
-    PC_ODR |= ((flags >> 1) << RS_PIN);
-    PC_ODR |= ((flags & 0b00000001) << RW_PIN);
+    PA_ODR |= ((flags >> 1) << RS_PIN);
+    PD_ODR |= ((flags & 0b00000001) << RW_PIN);
     set_data_bits(first);
-    PC_ODR |= (1 << E_PIN);
-    PC_ODR &= ~(1 << E_PIN);
+    PA_ODR |= (1 << E_PIN);
+    PA_ODR &= ~(1 << E_PIN);
     delay_ms(2);
     // Send the next 4 bits of the instruction
     set_data_bits(data);
-    PC_ODR |= (1 << E_PIN);
-    PC_ODR &= ~(1 << E_PIN);
+    PA_ODR |= (1 << E_PIN);
+    PA_ODR &= ~(1 << E_PIN);
     delay_ms(2);
 }
 
@@ -34,27 +29,30 @@ void send_instruction(uint8_t flags, uint8_t data) {    // flags: 0b000000(RS)(R
 
 void init_by_instruction() {    // required after reset in 4-bit mode
     set_data_bits(0b1100);
-    PC_ODR |= (1 << E_PIN);
-    PC_ODR &= ~(1 << E_PIN);
+    PA_ODR |= (1 << E_PIN);
+    PA_ODR &= ~(1 << E_PIN);
     delay_ms(5);
 
-    PC_ODR |= (1 << E_PIN);
-    PC_ODR &= ~(1 << E_PIN);
+    PA_ODR |= (1 << E_PIN);
+    PA_ODR &= ~(1 << E_PIN);
     delay_us(150);
 
-    PC_ODR |= (1 << E_PIN);
-    PC_ODR &= ~(1 << E_PIN);
+    PA_ODR |= (1 << E_PIN);
+    PA_ODR &= ~(1 << E_PIN);
 }
 
 void LCD_init() {
-    PB_DDR |= 0b00110000;     // Set as output
-    PB_CR1 |= 0b00110000;     // Enable as push pull
+    // RS and E
+    PA_DDR |= 0b00001010;   // Set as output
+    PA_CR1 |= 0b00001010;   // Enable as push pull
 
-    PC_DDR |= 0b11110000;     // Set as output
-    PC_CR1 |= 0b11110000;     // Enable as push pull
+    // RW
+    PD_DDR |= 0b01000000;   // Set as output
+    PD_CR1 |= 0b01000000;   // Enable as push pull
 
-    PF_DDR |= (1 << 4);       // Set as output
-    PF_CR1 |= (1 << 4);       // Enable as push pull
+    // DB4-DB7
+    PC_DDR |= 0b11110000;   // Set as output
+    PC_CR1 |= 0b11110000;   // Enable as push pull
 
     delay_ms(20);   // LCD takes 10 ms to initialize itself after power on
 
@@ -62,13 +60,13 @@ void LCD_init() {
 
     // RS RW 7 6 5 4 3 2 1 0
     // Force into 4 bit operation mode
-    PC_ODR &= ~(1 << RS_PIN);
-    PC_ODR &= ~(1 << RW_PIN);
-    // set_data_bits(0b0010);
-    PF_ODR |= (1 << 4);
+    PA_ODR &= ~(1 << RS_PIN);
+    PD_ODR &= ~(1 << RW_PIN);
 
-    PC_ODR |= (1 << E_PIN);
-    PC_ODR &= ~(1 << E_PIN);
+    PC_ODR |= (1 << 6);
+
+    PA_ODR |= (1 << E_PIN);
+    PA_ODR &= ~(1 << E_PIN);
     delay_ms(4);
 
     // Function set 00 00101000: 4 bit operations, on 2 lines

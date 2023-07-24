@@ -7,10 +7,10 @@
 
 /* Pin mappings
 DS18B20 -- STM8S   
-DQ -> PD0
+DQ -> PC3
 */
 
-#define ONE_WIRE_BUS 0
+#define ONE_WIRE_BUS 3
 
 /* Setup 1-wire bus */
 void ONE_WIRE_init();

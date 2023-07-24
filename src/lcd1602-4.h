@@ -3,23 +3,23 @@
 
 #include <stdint.h>
 
-/* HD44780 LCD1602 operating in 4-bit mode */
+/* HD44780 LCD1602 operating in 4-bit parallel mode */
 
 /* Pin mappings
 LCD1602 -- STM8S207K8   
-RS -> PC4
-RW -> PC6
-E  -> PC7
+RS -> PA3
+RW -> PD6
+E  -> PA1
 
-D4 -> PB4
-D5 -> PB5
-D6 -> PF4 (A6)
-D7 -> PC5
+D4 -> PC4
+D5 -> PC5
+D6 -> PC6
+D7 -> PC7
 */
 
-#define RS_PIN 4
+#define RS_PIN 3
 #define RW_PIN 6
-#define E_PIN 7
+#define E_PIN 1
 
 /* Initialize the lcd with default settings */
 void LCD_init();

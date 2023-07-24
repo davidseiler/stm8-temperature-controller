@@ -4,34 +4,34 @@
 #include "uart.h"
 
 static inline void write_zero() {
-    PD_ODR &= ~(1 << ONE_WIRE_BUS);
+    PC_ODR &= ~(1 << ONE_WIRE_BUS);
     delay_us(60);
-    PD_ODR |= (1 << ONE_WIRE_BUS);
+    PC_ODR |= (1 << ONE_WIRE_BUS);
     delay_us(6);
 }
 
 static inline void write_one() {
-    PD_ODR &= ~(1 << ONE_WIRE_BUS);
+    PC_ODR &= ~(1 << ONE_WIRE_BUS);
     delay_us(12);
-    PD_ODR |= (1 << ONE_WIRE_BUS);
+    PC_ODR |= (1 << ONE_WIRE_BUS);
     delay_us(56);
 }
 
 static uint8_t read_bit() {
     // Pull low for one clock to enable read slot
-    PD_ODR &= ~(1 << ONE_WIRE_BUS);
+    PC_ODR &= ~(1 << ONE_WIRE_BUS);
     delay_us(6);
-    PD_ODR |= (1 << ONE_WIRE_BUS);
-    PD_DDR &= ~(1 << ONE_WIRE_BUS);     // Enable as input
+    PC_ODR |= (1 << ONE_WIRE_BUS);
+    PC_DDR &= ~(1 << ONE_WIRE_BUS);     // Enable as input
     delay_us(12);   // Sample within the first 15 us
-    uint8_t res = ((PD_IDR & (1 << ONE_WIRE_BUS)) >> ONE_WIRE_BUS);
-    PD_DDR |= (1 << ONE_WIRE_BUS);
+    uint8_t res = ((PC_IDR & (1 << ONE_WIRE_BUS)) >> ONE_WIRE_BUS);
+    PC_DDR |= (1 << ONE_WIRE_BUS);
     delay_us(56);
     return res;    // 0x01 or 0x00
 }
 
 static void write_byte(uint8_t data) {
-    PD_DDR |= (1 << ONE_WIRE_BUS);
+    PC_DDR |= (1 << ONE_WIRE_BUS);
     for (int i = 0; i < 8; i++) {   // Bits written LSB first 
         if ((data & (1 << i)) >> i) {
             write_one();
@@ -52,15 +52,15 @@ static void read_bytes(void *buf, uint8_t num_bytes) {
 static void reset() {
     while (1) {
         // Send initilization pulse (pull down for min of 480us)
-        PD_ODR &= ~(1 << ONE_WIRE_BUS);    // Pull down
+        PC_ODR &= ~(1 << ONE_WIRE_BUS);    // Pull down
         delay_us(550);
 
-        PD_ODR |= (1 << ONE_WIRE_BUS);    // Pull up
-        PD_DDR &= ~(1 << ONE_WIRE_BUS);   // Enable as input
+        PC_ODR |= (1 << ONE_WIRE_BUS);    // Pull up
+        PC_DDR &= ~(1 << ONE_WIRE_BUS);   // Enable as input
 
         delay_us(60);   // Wait for one time window for DS18B20(s) to respond
 
-        if (!(PD_IDR & (1 << ONE_WIRE_BUS))) {
+        if (!(PC_IDR & (1 << ONE_WIRE_BUS))) {
             delay_us(430); // Wait for the end of slave pulse
             break;
         } 
@@ -99,9 +99,9 @@ static void print_temp(uint8_t* temp_bytes) {       // Only the first 2 bytes wi
 
 void ONE_WIRE_init() {
     // Setup PIN A4 for input/output for 1-wire bus
-    PD_DDR |= (1 << ONE_WIRE_BUS);    // Enable as output
-    PD_CR1 |= (1 << ONE_WIRE_BUS);    // Enable as push pull when output and pull up when input
-    PD_ODR |= (1 << ONE_WIRE_BUS);    // Pull up
+    PC_DDR |= (1 << ONE_WIRE_BUS);    // Enable as output
+    PC_CR1 |= (1 << ONE_WIRE_BUS);    // Enable as push pull when output and pull up when input
+    PC_ODR |= (1 << ONE_WIRE_BUS);    // Pull up
 }
 
 uint8_t ONE_WIRE_check_crc(uint8_t* data, uint8_t data_size) {    // CRC of zero is a successful message

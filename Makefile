@@ -37,7 +37,6 @@ debug: clean
 	@$(MAKE) DEBUG=1 $(TARGET)
 
 flash:
-	sudo stm8flash -c stlinkv21 -p stm8s003f3 -w $(BUILD_DIR)/main.ihx
-#	 sudo stm8flash -c stlinkv21 -p stm8s207k8 -w $(BUILD_DIR)/main.ihx
+	sudo stm8flash -c stlinkv2 -p stm8s003f3 -w $(BUILD_DIR)/main.ihx
 
 .PHONY: all clean debug
