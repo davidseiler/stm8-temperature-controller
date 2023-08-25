@@ -43,5 +43,4 @@ int16_t ONE_WIRE_whole_temperature(uint8_t* temp_bytes);
    10,000 equals 1 degree Celsius */
 uint16_t ONE_WIRE_decimal_temperature(uint8_t* temp_bytes);
 
-
 #endif

@@ -98,7 +98,7 @@ static void print_temp(uint8_t* temp_bytes) {       // Only the first 2 bytes wi
 }
 
 void ONE_WIRE_init() {
-    // Setup PIN A4 for input/output for 1-wire bus
+    // Setup one wire bus
     PC_DDR |= (1 << ONE_WIRE_BUS);    // Enable as output
     PC_CR1 |= (1 << ONE_WIRE_BUS);    // Enable as push pull when output and pull up when input
     PC_ODR |= (1 << ONE_WIRE_BUS);    // Pull up

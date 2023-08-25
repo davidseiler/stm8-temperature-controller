@@ -1,25 +1,15 @@
-#ifndef LCD16024_H
-#define LCD16024_H
+#ifndef LCD_H
+#define LCD_H
 
 #include <stdint.h>
 
-/* HD44780 LCD1602 operating in 4-bit parallel mode */
-
-/* Pin mappings
-LCD1602 -- STM8S207K8   
-RS -> PA3
-RW -> PD6
-E  -> PA1
-
-D4 -> PC4
-D5 -> PC5
-D6 -> PC6
-D7 -> PC7
-*/
+/* Interface for LCD operations */
 
 #define RS_PIN 3
 #define RW_PIN 6
 #define E_PIN 1
+
+#define I2C_ADDR 0x27
 
 /* Initialize the lcd with default settings */
 void LCD_init();

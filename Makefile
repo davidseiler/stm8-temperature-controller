@@ -17,7 +17,8 @@ OBJS = $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.rel)
 # Output binary
 TARGET = $(BUILD_DIR)/main.ihx
 
-DEBUG = 0
+UART = 0
+I2C = 0
 
 # Default target
 all: $(TARGET)
@@ -28,13 +29,10 @@ $(TARGET): $(OBJS)
 
 $(BUILD_DIR)/%.rel: $(SRC_DIR)/%.c
 	mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@ -DUSE_UART=${DEBUG}
+	$(CC) $(CFLAGS) -c $< -o $@ -DUSE_UART=${UART} -DI2C=${I2C}
 
 clean:
 	rm -rf $(BUILD_DIR)
-
-debug: clean
-	@$(MAKE) DEBUG=1 $(TARGET)
 
 flash:
 	sudo stm8flash -c stlinkv2 -p stm8s003f3 -w $(BUILD_DIR)/main.ihx

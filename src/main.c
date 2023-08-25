@@ -2,17 +2,17 @@
 #include "delay.h"
 #include "uart.h"
 #include "ds18b20.h"
-#include "lcd1602-4.h"
 #include "fan.h"
+#include "lcd.h"
 
 #define NUM_SENSORS 3
+#define CONTROL_LOOP_INTERVAL 500
 
 // Port setup for rotary encoder
 #define PD_ISR              6   // interrupt irq for Port D external
 #define PD_ENCODER_A        2   // EC2
 #define PD_ENCODER_B        3   // EC1
 #define PD_ENCODER_C        1   // Pin for EC3 encoder push button
-
 
 /*
 Rotary Encoder -- STM8S
@@ -24,9 +24,7 @@ EC3 -> PD1
 // Since there is limited EEPROM space for global variables, hard code the global into the first RAM address
 #define target_temp (*(volatile uint8_t *)(0x0000))
 
-// TODO: interrupts during LCD operations mess things up, to the point that reset is required,
-// I think what is happening is LCD_write_position doesn't return the memory section to the correct spot,
-// so it is possible after the interrupt is exited the next text is randomly sent somewhere else
+
 void encoder_triggered(void) __interrupt(PD_ISR) {
     PD_CR2 &= ~(1 << PD_ENCODER_A);     // Disable interrupts
     uint8_t b_val = (PD_IDR & (1 << PD_ENCODER_B)) >> PD_ENCODER_B;  // Read value of B line
@@ -49,9 +47,10 @@ void encoder_triggered(void) __interrupt(PD_ISR) {
     // Wait for both lines to bounce up
     while (!((PD_IDR & (1 << PD_ENCODER_B)) >> PD_ENCODER_B) || !((PD_IDR & (1 << PD_ENCODER_A)) >> PD_ENCODER_A)); 
 
-    PD_CR2 |= (1 << PD_ENCODER_A);     // Enable interrupts
+    PD_CR2 |= (1 << PD_ENCODER_A);     // Re-enable interrupts
 }
 
+// Control Loop
 static void monitor_temp(uint8_t* rom_bytes, uint16_t frequency_ms) {
     uint8_t fan_speed = 1;
     while(1) {
@@ -82,7 +81,6 @@ static void monitor_temp(uint8_t* rom_bytes, uint16_t frequency_ms) {
         sprintf(avg_temp_string, "%2d.%04d", average_temp, average_decimal_temp);
 
         char temps[36];
-        // sprintf(temps, "%.5s%cC %.5s%cC %.5s%cC Fan:%3d%c", t1 + 2, 0xDF, t2 + 2, 0xDF, t3 + 2, 0xDF, ((fan_speed * 100) / 80) - 1, 0x25);
         sprintf(temps, "Avg: %.5s%cC    T:%3d%cC Fan:%3d%c", avg_temp_string, 0xDF, target_temp, 0xDF, ((fan_speed * 100) / 80) - 1, 0x25);
         LCD_clear();
         LCD_write_16_2(temps, 0);
@@ -103,10 +101,11 @@ void main() {
     #if USE_UART
         UART_init();
     #endif
-    
-    target_temp = 25;
 
+    target_temp = 25;
+    
     LCD_init();
+    LCD_write_16_2("Initializing....                ", 4);
     PWM_init();
     PWM_start();
     ONE_WIRE_init();
@@ -119,19 +118,10 @@ void main() {
     PD_DDR &= ~(1 << PD_ENCODER_B);     // Enable as input
     PD_CR1 |= (1 << PD_ENCODER_B);      // Enable as pull up
 
-
-    // PD_DDR &= ~(1 << PD_ENCODER_C);     // Enable as input
-    // PD_CR1 |= (1 << PD_ENCODER_C);      // Enable as pull up
-    // PD_CR2 |= (1 << PD_ENCODER_C);      // Enable interrupts
-
     // Fetch the ROM's of all the devices on the bus
     uint8_t* rom_bytes = calloc(NUM_SENSORS * 8, sizeof(uint8_t));
     ONE_WIRE_searchROMs(rom_bytes, NUM_SENSORS);
 
-    // Expected DS18B20 serial numbers
-    //0xc1a967770e64ff28
-    //0xe29815740e64ff28
-    //0x3f760e770e64ff28
     for (uint8_t i = 0; i < NUM_SENSORS; i++) {
         PRINTF("\nROM%d SERIAL NUMBER: 0x", i); 
         for (uint8_t j = 0; j < 8; j++) {
@@ -141,6 +131,6 @@ void main() {
     PRINTF("\n");
 
     // Start temperature controlling
-    monitor_temp(rom_bytes, 500);
+    monitor_temp(rom_bytes, CONTROL_LOOP_INTERVAL);
     free(rom_bytes);
 }
