@@ -1,7 +1,7 @@
 # STM8S Temperature Controller for 3D Printer Enclosure
 
 ## Description
-This repository contains the source code for a STM8S temperature controller for maintaining a constant ambient temperature in an 3D printer enclosure. It developed for the sdcc targeting STM8S.
+This repository contains the source code for a STM8S temperature controller for maintaining a constant ambient temperature in a 3D printer enclosure. It is developed for the sdcc targeting STM8S.
 
 ## Part List
 
@@ -31,7 +31,3 @@ This repository contains the source code for a STM8S temperature controller for 
  Flash the code on the microcontroller:
 
     make flash
-
- Notes: 
-  - The UART is setup through to use the same UART/pins that are used to flash the device
-  - The dev board I am using has a built in stlink the version is hardcoded in the Makefile that may need to be updated for different setups
