@@ -53,14 +53,14 @@ void encoder_triggered(void) __interrupt(PD_ISR) {
 // Control Loop
 static void monitor_temp(uint8_t* rom_bytes, uint16_t frequency_ms) {
     uint8_t fan_speed = 1;
+    static uint8_t scratchpad[9 * NUM_SENSORS];
+
     while(1) {
         int16_t average_temp = 0;
         uint16_t average_decimal_temp = 0;
         PWM_set_duty_cycle(fan_speed);
 
         ONE_WIRE_convertTemperature();
-
-        uint8_t* scratchpad = calloc(9 * NUM_SENSORS, sizeof(uint8_t));
 
         // Address each sensor and fetch temperature
         for (uint8_t i = 0; i < NUM_SENSORS; i++) {
@@ -92,7 +92,10 @@ static void monitor_temp(uint8_t* rom_bytes, uint16_t frequency_ms) {
             fan_speed = fan_speed - 10;
         }
 
-        free(scratchpad);
+        // Clear scratchpad memory
+        for (int i = 0; i < NUM_SENSORS * 9; i++) {
+            scratchpad[i] = 0;
+        }
         delay_ms(frequency_ms);
     }
 }
@@ -119,7 +122,12 @@ void main() {
     PD_CR1 |= (1 << PD_ENCODER_B);      // Enable as pull up
 
     // Fetch the ROM's of all the devices on the bus
-    uint8_t* rom_bytes = calloc(NUM_SENSORS * 8, sizeof(uint8_t));
+    static uint8_t rom_bytes[NUM_SENSORS * 8];
+    // Clear rom_bytes memory
+    for (int i = 0; i < NUM_SENSORS * 8; i++) {
+        rom_bytes[i] = 0;
+    }
+
     ONE_WIRE_searchROMs(rom_bytes, NUM_SENSORS);
 
     for (uint8_t i = 0; i < NUM_SENSORS; i++) {
@@ -132,5 +140,4 @@ void main() {
 
     // Start temperature controlling
     monitor_temp(rom_bytes, CONTROL_LOOP_INTERVAL);
-    free(rom_bytes);
 }
